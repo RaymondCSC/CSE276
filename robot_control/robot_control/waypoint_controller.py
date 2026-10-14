@@ -8,12 +8,12 @@ from std_msgs.msg import Float32MultiArray
 
 
 # ---------- CALIBRATION:  ----------
-FORWARD_LEFT_COMMAND = 0.15
-FORWARD_RIGHT_COMMAND = 0.15
-FORWARD_SPEED = 0.16       # m/s EG not exactly 
+FORWARD_LEFT_COMMAND = 0.43
+FORWARD_RIGHT_COMMAND = 0.40 #when speed grow command muust grow at the same time for same distance
+FORWARD_SPEED = 0.54       # m/s EG not exactly 
 
-TURN_COMMAND = 0.30        
-TURN_RATE = 0.5           # rad/s EG not exactly
+TURN_COMMAND = 0.5        
+TURN_RATE = 4.2           # rad/s EG not exactly
 
 # --------------------------------------------
 
@@ -119,8 +119,9 @@ def main():
         print("Loaded waypoints:", points)
 
         #just for testing turn
-        robot.turn(1.57) 
-        return
+        #robot.turn(1.57) 
+        # robot.forward(1)
+        # return
         #####################
         # Physically start at the first point and its heading.
         x, y, heading = points[0]
