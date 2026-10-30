@@ -13,7 +13,7 @@ FORWARD_RIGHT_COMMAND = 0.40 #when speed grow command muust grow at the same tim
 FORWARD_SPEED = 0.54       # m/s EG not exactly 
 
 TURN_COMMAND = 0.5        
-TURN_RATE = 4.2           # rad/s EG not exactly
+TURN_RATE = 3.8         # rad/s EG not exactly
 
 # --------------------------------------------
 
@@ -119,9 +119,9 @@ def main():
         print("Loaded waypoints:", points)
 
         #just for testing turn
-        #robot.turn(1.57) 
+        robot.turn(1.57) 
         # robot.forward(1)
-        # return
+        return
         #####################
         # Physically start at the first point and its heading.
         x, y, heading = points[0]
