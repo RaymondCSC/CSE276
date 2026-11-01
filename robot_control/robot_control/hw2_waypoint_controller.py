@@ -89,11 +89,10 @@ class Robot(Node):
         self.move(-command, command, seconds)
 
 
-# ---------- HW2 helpers: your Robot class above is unchanged ----------
-POSITION_TOLERANCE = 0.08             # metres; accept within 8 cm
+# ---------- HW2 helpers ----------
+POSITION_TOLERANCE = 0.06             # metres; accept within 8 cm
 HEADING_TOLERANCE = math.radians(6)  # final heading within 6 degrees
 
-# Copied from the previous controller: VERIFY against your physical setup.
 # ID: (world x, world y, centre height, facing degrees, printed spin degrees).
 # Facing: 0 = +x, 90 = +y, 180 = -x, -90 = -y.
 # Spin: positive counterclockwise when looking at the printed face.
