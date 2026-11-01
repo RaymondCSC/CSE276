@@ -8,9 +8,9 @@ from std_msgs.msg import Float32MultiArray
 
 
 # ---------- CALIBRATION:  ----------
-FORWARD_LEFT_COMMAND = 0.43
+FORWARD_LEFT_COMMAND = 0.38
 FORWARD_RIGHT_COMMAND = 0.40 #when speed grow command muust grow at the same time for same distance
-FORWARD_SPEED = 0.54       # m/s EG not exactly 
+FORWARD_SPEED = 0.57       # m/s EG not exactly 
 
 TURN_COMMAND = 0.5        
 TURN_RATE = 3.8           # rad/s EG not exactly
@@ -48,6 +48,8 @@ class Robot(Node):
         self.publisher = self.create_publisher(
             Float32MultiArray, "motor_commands", 10
         )
+        self.total_translation = 0.0
+        self.total_rotation = 0.0
 
     def send(self, left, right):
         message = Float32MultiArray()
@@ -75,6 +77,7 @@ class Robot(Node):
     def forward(self, distance):
         seconds = distance / FORWARD_SPEED
         self.move(FORWARD_LEFT_COMMAND, FORWARD_RIGHT_COMMAND, seconds)
+        self.total_translation += abs(distance)
 
     def turn(self, angle):
         angle = wrap(angle)
@@ -87,6 +90,7 @@ class Robot(Node):
         seconds = abs(angle) / TURN_RATE
 
         self.move(-command, command, seconds)
+        self.total_rotation += abs(angle)
 
 
 # ---------- HW2 helpers ----------
@@ -245,9 +249,11 @@ def main():
 
     # Read the whole file before moving.
     points = read_waypoints() 
-
+    wheel_separation = 0.13
     rclpy.init()
     robot = Robot()
+
+    waypoint_results = []
 
     try:
         # Wait until motor_control.py subscribes.
@@ -264,6 +270,7 @@ def main():
         x, y, heading = points[0]
         current_location = (x, y, heading)  # initial pose is known
         traverled_points = [current_location[0:2]]
+        
 
         for next_x, next_y, next_heading in points[1:]:
             # 1. Keep approaching until measured position is within tolerance.
@@ -295,8 +302,62 @@ def main():
                 current_location = get_current_location(robot)
                 traverled_points.append(current_location[0:2])
 
+            # Record errors after all position and heading corrections.
+            translation_error = math.hypot(
+                current_location[0] - next_x,
+                current_location[1] - next_y,
+            )
+            rotation_error = abs(math.degrees(
+                wrap(current_location[2] - next_heading)
+            ))
+
+            waypoint_results.append((
+                next_x,
+                next_y,
+                math.degrees(next_heading),
+                translation_error,
+                rotation_error,
+            ))
+
         # 6. Plot the recorded positions once all waypoints are finished.
+        # Print final totals once, after completing all waypoints.
+        total_distance = (
+            robot.total_translation
+            + (wheel_separation / 2.0) * robot.total_rotation
+        )
+
+        print("\nTRAVEL TOTALS (command-based estimates)")
+        print(f"{'Quantity':<38} Result")
+        print(f"{'Distance unit':<38} 1 m")
+        print(f"{'Wheel separation, b':<38} {wheel_separation:.3f} m")
+        print(f"{'Total translational travel':<38} "
+              f"{robot.total_translation:.3f} m")
+        print(f"{'Total absolute rotation':<38} "
+              f"{robot.total_rotation:.3f} rad")
+        print(f"{'Total distance including rotation':<38} "
+              f"{total_distance:.3f} m")
+
+        print("\nWAYPOINT ERRORS (AprilTag-based estimates)")
+        print(
+            f"{'Waypoint':<18} {'Target position (m)':<22} "
+            f"{'Target heading (deg)':<22} "
+            f"{'Translation error (m)':<24} {'Rotation error (deg)'}"
+        )
+
+        names = ["First target", "Second target", "Return to start"]
+        for i, (tx, ty, th, position_error, heading_error) in enumerate(
+            waypoint_results
+        ):
+            name = names[i] if i < len(names) else f"Waypoint {i + 1}"
+            target_position = f"({tx:g}, {ty:g})"
+            print(
+                f"{name:<18} {target_position:<22} "
+                f"{th:<22.1f} {position_error:<24.4f} "
+                f"{heading_error:.3f}"
+            )
+
         draw_chart_of_traverled_points(traverled_points, points)
+
     except KeyboardInterrupt:
         pass
 
